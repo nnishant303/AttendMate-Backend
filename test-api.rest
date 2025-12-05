@@ -1,0 +1,273 @@
+### AttendMate API Tests (REST Client Extension)
+### Use this file with VS Code REST Client extension
+
+@baseUrl = http://localhost:5000/api
+@token = YOUR_TOKEN_HERE
+
+### ========== HEALTH CHECK ==========
+GET http://localhost:5000/api/health
+
+### ========== AUTH ==========
+
+### Register Admin
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "name": "Admin User",
+  "email": "admin@test.com",
+  "password": "admin123",
+  "role": "admin"
+}
+
+### Register Employee
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "name": "Employee User",
+  "email": "employee@test.com",
+  "password": "emp123",
+  "role": "employee"
+}
+
+### Login Admin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@test.com",
+  "password": "admin123"
+}
+
+### Login Employee
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "employee@test.com",
+  "password": "emp123"
+}
+
+### Get Current User
+GET {{baseUrl}}/auth/me
+Authorization: Bearer {{token}}
+
+### Logout
+POST {{baseUrl}}/auth/logout
+Authorization: Bearer {{token}}
+
+### ========== EMPLOYEES ==========
+
+### Add Employee (Admin)
+POST {{baseUrl}}/employees/add
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "John Doe",
+  "employeeId": "EMP001",
+  "email": "john@company.com",
+  "phone": "1234567890",
+  "department": "Engineering",
+  "designation": "Software Engineer",
+  "salary": 60000,
+  "joiningDate": "2024-01-15",
+  "address": "123 Main Street"
+}
+
+### Add Another Employee
+POST {{baseUrl}}/employees/add
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Jane Smith",
+  "employeeId": "EMP002",
+  "email": "jane@company.com",
+  "phone": "0987654321",
+  "department": "HR",
+  "designation": "HR Manager",
+  "salary": 55000,
+  "joiningDate": "2024-02-01",
+  "address": "456 Oak Avenue"
+}
+
+### Get All Employees
+GET {{baseUrl}}/employees
+Authorization: Bearer {{token}}
+
+### Get Employee by Custom ID
+GET {{baseUrl}}/employees/find/EMP001
+Authorization: Bearer {{token}}
+
+### Get Employee by MongoDB ID (replace with actual ID)
+GET {{baseUrl}}/employees/675048c8e8f9a1234567890a
+Authorization: Bearer {{token}}
+
+### Update Employee (Admin)
+PUT {{baseUrl}}/employees/675048c8e8f9a1234567890a
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "department": "Product Engineering",
+  "salary": 65000
+}
+
+### Delete Employee (Admin)
+DELETE {{baseUrl}}/employees/675048c8e8f9a1234567890a
+Authorization: Bearer {{token}}
+
+### ========== ATTENDANCE ==========
+
+### Check-In
+POST {{baseUrl}}/attendance/check-in
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "employeeId": "EMP001",
+  "date": "2024-12-04",
+  "time": "09:30:00"
+}
+
+### Check-In Late
+POST {{baseUrl}}/attendance/check-in
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "employeeId": "EMP002",
+  "date": "2024-12-04",
+  "time": "10:30:00"
+}
+
+### Check-Out
+POST {{baseUrl}}/attendance/check-out
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "employeeId": "EMP001",
+  "date": "2024-12-04",
+  "time": "18:00:00"
+}
+
+### Get All Attendance
+GET {{baseUrl}}/attendance
+Authorization: Bearer {{token}}
+
+### Get Attendance by Date
+GET {{baseUrl}}/attendance?date=2024-12-04
+Authorization: Bearer {{token}}
+
+### Get Attendance by Employee
+GET {{baseUrl}}/attendance/EMP001
+Authorization: Bearer {{token}}
+
+### Get Attendance by Employee with Date Range
+GET {{baseUrl}}/attendance/EMP001?from=2024-12-01&to=2024-12-31
+Authorization: Bearer {{token}}
+
+### ========== LEAVES ==========
+
+### Request Leave
+POST {{baseUrl}}/leaves/request
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "employeeId": "EMP001",
+  "leaveType": "Sick Leave",
+  "fromDate": "2024-12-10",
+  "toDate": "2024-12-12",
+  "reason": "Medical appointment"
+}
+
+### Request Another Leave
+POST {{baseUrl}}/leaves/request
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "employeeId": "EMP002",
+  "leaveType": "Casual Leave",
+  "fromDate": "2024-12-15",
+  "toDate": "2024-12-16",
+  "reason": "Personal work"
+}
+
+### Get All Leaves (Admin)
+GET {{baseUrl}}/leaves
+Authorization: Bearer {{token}}
+
+### Get Leaves by Employee
+GET {{baseUrl}}/leaves/employee/EMP001
+Authorization: Bearer {{token}}
+
+### Approve Leave (Admin) - replace with actual leave ID
+PUT {{baseUrl}}/leaves/675048c8e8f9a1234567890b
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "status": "Approved"
+}
+
+### Reject Leave (Admin)
+PUT {{baseUrl}}/leaves/675048c8e8f9a1234567890b
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "status": "Rejected"
+}
+
+### ========== EVENTS ==========
+
+### Add Event (Admin)
+POST {{baseUrl}}/events/add
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "title": "Team Meeting",
+  "start": "2024-12-10T10:00:00",
+  "end": "2024-12-10T11:00:00",
+  "description": "Monthly team sync",
+  "allDay": false,
+  "type": "Meeting"
+}
+
+### Add Holiday Event
+POST {{baseUrl}}/events/add
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "title": "Christmas",
+  "start": "2024-12-25T00:00:00",
+  "end": "2024-12-25T23:59:59",
+  "description": "Christmas Holiday",
+  "allDay": true,
+  "type": "Holiday"
+}
+
+### Get All Events
+GET {{baseUrl}}/events
+Authorization: Bearer {{token}}
+
+### Update Event (Admin) - replace with actual event ID
+PUT {{baseUrl}}/events/675048c8e8f9a1234567890c
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "title": "Updated Team Meeting",
+  "description": "Updated monthly sync"
+}
+
+### Delete Event (Admin)
+DELETE {{baseUrl}}/events/675048c8e8f9a1234567890c
+Authorization: Bearer {{token}}
