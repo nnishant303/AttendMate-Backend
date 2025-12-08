@@ -1,9 +1,13 @@
 import Employee from "../models/Employee.js";
+import bcrypt from "bcryptjs";
 
-// ADD EMPLOYEE
 export const addEmployee = async (req, res) => {
   try {
-    const { employeeId, email } = req.body;
+    const { employeeId, email, password } = req.body;
+
+    if (!password) {
+      return res.status(400).json({ message: "Password is required" });
+    }
 
     if (await Employee.findOne({ employeeId }))
       return res.status(400).json({ message: "Employee ID already exists" });
@@ -11,15 +15,20 @@ export const addEmployee = async (req, res) => {
     if (await Employee.findOne({ email }))
       return res.status(400).json({ message: "Email already exists" });
 
-    const employee = await Employee.create(req.body);
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const employeeData = { ...req.body, password: hashedPassword };
 
-    res.status(201).json({ message: "Employee added successfully", employee });
+    const employee = await Employee.create(employeeData);
+
+    const employeeResponse = employee.toObject();
+    delete employeeResponse.password;
+
+    res.status(201).json({ message: "Employee added successfully", employee: employeeResponse });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 };
 
-// GET ALL
 export const getEmployees = async (req, res) => {
   try {
     const employees = await Employee.find();
@@ -28,8 +37,6 @@ export const getEmployees = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
-
-// GET BY MONGO _id
 export const getEmployeeById = async (req, res) => {
   try {
     const emp = await Employee.findById(req.params.id);
@@ -40,7 +47,6 @@ export const getEmployeeById = async (req, res) => {
   }
 };
 
-// 🔥 NEW — GET BY employeeId (EMP001)
 export const getEmployeeByEmployeeId = async (req, res) => {
   try {
     const emp = await Employee.findOne({ employeeId: req.params.employeeId });
@@ -51,7 +57,6 @@ export const getEmployeeByEmployeeId = async (req, res) => {
   }
 };
 
-// UPDATE
 export const updateEmployee = async (req, res) => {
   try {
     const emp = await Employee.findByIdAndUpdate(req.params.id, req.body, {
@@ -65,7 +70,6 @@ export const updateEmployee = async (req, res) => {
   }
 };
 
-// DELETE
 export const deleteEmployee = async (req, res) => {
   try {
     const emp = await Employee.findByIdAndDelete(req.params.id);

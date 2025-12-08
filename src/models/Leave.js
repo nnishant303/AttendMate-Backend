@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 
 const leaveSchema = new mongoose.Schema({
   employeeId: { type: String, required: true },
-  leaveType: { type: String, required: true }, // Sick, Casual, etc.
+  leaveType: { type: String, required: true }, 
   fromDate: { type: String, required: true },
   toDate: { type: String, required: true },
   reason: { type: String, required: true },

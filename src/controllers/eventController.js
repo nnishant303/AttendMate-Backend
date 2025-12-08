@@ -2,7 +2,7 @@ import Event from "../models/Event.js";
 
 // @desc    Add new event
 // @route   POST /api/events/add
-// @access  Private (Admin)
+// @access  Private (HR)
 export const addEvent = async (req, res) => {
   try {
     const event = new Event(req.body);
@@ -31,7 +31,7 @@ export const getEvents = async (req, res) => {
 
 // @desc    Update event
 // @route   PUT /api/events/:id
-// @access  Private (Admin)
+// @access  Private (HR)
 export const updateEvent = async (req, res) => {
   try {
     const event = await Event.findByIdAndUpdate(
@@ -55,7 +55,7 @@ export const updateEvent = async (req, res) => {
 
 // @desc    Delete event
 // @route   DELETE /api/events/:id
-// @access  Private (Admin)
+// @access  Private (HR)
 export const deleteEvent = async (req, res) => {
   try {
     const event = await Event.findByIdAndDelete(req.params.id);

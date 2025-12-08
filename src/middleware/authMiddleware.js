@@ -5,7 +5,6 @@ const authMiddleware = async (req, res, next) => {
   try {
     let token;
 
-    // Check for token in cookies or Authorization header
     if (req.cookies.token) {
       token = req.cookies.token;
     } else if (req.headers.authorization && req.headers.authorization.startsWith("Bearer")) {
@@ -16,10 +15,8 @@ const authMiddleware = async (req, res, next) => {
       return res.status(401).json({ message: "Not authorized, no token" });
     }
 
-    // Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    // Get user from token
     req.user = await User.findById(decoded.id).select("-password");
 
     if (!req.user) {

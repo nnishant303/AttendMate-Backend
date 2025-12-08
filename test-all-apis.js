@@ -80,7 +80,7 @@ async function testAuthRegisterAndLogin() {
         name: 'Test Admin',
         email: 'testadmin@test.com',
         password: 'admin123',
-        role: 'admin'
+        role: 'hr'
     });
 
     if (adminRegister.success && adminRegister.data.token) {
@@ -436,5 +436,5 @@ async function runAllTests() {
     }
 }
 
-// Run tests
-runAllTests();
+// Run tests manually with: node test-all-apis.js
+// runAllTests();

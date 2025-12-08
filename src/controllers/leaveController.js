@@ -28,7 +28,7 @@ export const requestLeave = async (req, res) => {
   }
 };
 
-// GET /api/leaves  (admin)
+// GET /api/leaves  (HR)
 export const getLeaves = async (req, res) => {
   try {
     const leaves = await Leave.find().sort({ appliedOn: -1 });
@@ -50,7 +50,7 @@ export const getLeavesByEmployee = async (req, res) => {
   }
 };
 
-// PUT /api/leaves/:id  (admin) - change status
+// PUT /api/leaves/:id  (HR) - change status
 export const actionLeave = async (req, res) => {
   try {
     const { status } = req.body;
