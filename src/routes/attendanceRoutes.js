@@ -6,12 +6,13 @@ import {
     getAttendanceByEmployee,
 } from "../controllers/attendanceController.js";
 import authMiddleware from "../middleware/authMiddleware.js";
+import employeeAuthMiddleware from "../middleware/employeeAuthMiddleware.js";
 
 const router = express.Router();
 
-router.post("/check-in", authMiddleware, checkIn);
-router.post("/check-out", authMiddleware, checkOut);
+router.post("/check-in", employeeAuthMiddleware, checkIn);
+router.post("/check-out", employeeAuthMiddleware, checkOut);
+router.get("/:employeeId", employeeAuthMiddleware, getAttendanceByEmployee);
 router.get("/", authMiddleware, getAllAttendance);
-router.get("/:employeeId", authMiddleware, getAttendanceByEmployee);
 
 export default router;
