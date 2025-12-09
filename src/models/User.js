@@ -6,7 +6,7 @@ const userSchema = new mongoose.Schema({
   password: { type: String },
   googleId: { type: String },
   picture: { type: String },
-  role: { type: String, enum: ["hr", "employee"], default: "employee" },
+  role: { type: String, enum: ["hr"], default: "hr" },
 }, { timestamps: true });
 
 
