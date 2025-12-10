@@ -21,15 +21,13 @@ connectDB();
 const app = express();
 const httpServer = createServer(app);
 
-const allowedOrigins = [
-  process.env.FRONTEND_URL || "http://localhost:5173",
-  "http://localhost:3000",
-];
+// Allow multiple frontend origins (comma-separated in env) e.g. "http://localhost:5174,http://localhost:5173"
+const FRONTEND_URLS = (process.env.FRONTEND_URLS || "http://localhost:5174,http://localhost:5173").split(",").map(s => s.trim());
 
 const io = new Server(httpServer, {
   cors: {
-    origin: allowedOrigins,
-    methods: ["GET", "POST", "PUT", "DELETE"],
+    origin: FRONTEND_URLS,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     credentials: true,
   },
 });
@@ -38,12 +36,24 @@ const io = new Server(httpServer, {
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
-app.use(
-  cors({
-    origin: allowedOrigins,
-    credentials: true,
-  })
-);
+
+// CORS options that validate origin against allowed list and echo back the origin
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Allow requests with no origin (e.g., server-to-server, curl)
+    if (!origin) return callback(null, true);
+    if (FRONTEND_URLS.indexOf(origin) !== -1) {
+      return callback(null, true);
+    }
+    return callback(new Error('Not allowed by CORS'));
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+};
+
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 app.use(helmet());
 app.use(morgan("dev"));
 

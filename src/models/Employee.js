@@ -11,7 +11,9 @@ const employeeSchema = new mongoose.Schema({
   salary: { type: Number, required: true },
   joiningDate: { type: Date, required: true },
   address: { type: String },
-  image: { type: String } 
+  dateOfBirth: { type: Date },
+  gender: { type: String },
+  image: { type: String }
 }, { timestamps: true });
 
 export default mongoose.model("Employee", employeeSchema);

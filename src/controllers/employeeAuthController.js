@@ -14,12 +14,14 @@ const generateToken = (id) => jwt.sign({ id }, process.env.JWT_SECRET, { expires
 export const employeeLogin = async (req, res) => {
     try {
         const { email, password } = req.body;
+        console.log("[employeeAuthController] employeeLogin called", { email: email || null });
 
         if (!email || !password) {
             return res.status(400).json({ message: "Email and password are required" });
         }
     
         const employee = await Employee.findOne({ email });
+        console.log("[employeeAuthController] found employee:", !!employee, employee ? { id: employee._id } : null);
         if (!employee) {
             return res.status(401).json({ message: "Invalid email or password" });
         }

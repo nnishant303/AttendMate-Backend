@@ -44,12 +44,19 @@ export const registerUser = async (req, res) => {
 export const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
+    console.log("[authController] loginUser called", { email: email || null });
     if (!email || !password) return res.status(400).json({ message: "Missing credentials" });
 
     const user = await User.findOne({ email });
+    console.log("[authController] found user:", !!user, user ? { id: user._id, role: user.role } : null);
     if (!user) return res.status(400).json({ message: "Invalid email or password" });
 
+    const hasPassword = !!user.password;
+    console.log("[authController] User has password in DB:", hasPassword);
+
     const match = await bcrypt.compare(password, user.password || "");
+    console.log("[authController] Password match result:", match);
+
     if (!match) return res.status(400).json({ message: "Invalid email or password" });
 
     const token = generateToken(user._id);
