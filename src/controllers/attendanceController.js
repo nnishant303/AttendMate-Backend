@@ -38,7 +38,8 @@ export const checkIn = async (req, res) => {
     });
 
 
-    try { req.io?.to(`attendance_${date}`).emit("attendanceUpdated", attendance); } catch (e) {/*ignore*/ }
+    // Emit Socket.io event for real-time updates
+    try { req.io?.emit("attendanceUpdated", attendance); } catch (e) {/*ignore*/ }
 
     res.status(201).json({ message: "Checked in successfully", attendance });
   } catch (err) {
@@ -65,7 +66,8 @@ export const checkOut = async (req, res) => {
     // If checkInTime missing, keep status logic simple
     await attendance.save();
 
-    try { req.io?.to(`attendance_${date}`).emit("attendanceUpdated", attendance); } catch (e) {/*ignore*/ }
+    // Emit Socket.io event for real-time updates
+    try { req.io?.emit("attendanceUpdated", attendance); } catch (e) {/*ignore*/ }
 
     res.json({ message: "Checked out successfully", attendance });
   } catch (err) {

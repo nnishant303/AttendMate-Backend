@@ -23,6 +23,9 @@ export const addEmployee = async (req, res) => {
     const employeeResponse = employee.toObject();
     delete employeeResponse.password;
 
+    // Emit Socket.io event for real-time updates
+    try { req.io?.emit("employeeUpdated", employeeResponse); } catch (e) { /* ignore */ }
+
     res.status(201).json({ message: "Employee added successfully", employee: employeeResponse });
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -64,6 +67,10 @@ export const updateEmployee = async (req, res) => {
       runValidators: true,
     });
     if (!emp) return res.status(404).json({ message: "Employee not found" });
+
+    // Emit Socket.io event for real-time updates
+    try { req.io?.emit("employeeUpdated", emp); } catch (e) { /* ignore */ }
+
     res.json({ message: "Employee updated successfully", employee: emp });
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -74,6 +81,10 @@ export const deleteEmployee = async (req, res) => {
   try {
     const emp = await Employee.findByIdAndDelete(req.params.id);
     if (!emp) return res.status(404).json({ message: "Employee not found" });
+
+    // Emit Socket.io event for real-time updates
+    try { req.io?.emit("employeeUpdated", emp); } catch (e) { /* ignore */ }
+
     res.json({ message: "Employee deleted successfully" });
   } catch (err) {
     res.status(500).json({ message: err.message });

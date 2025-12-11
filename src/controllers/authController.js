@@ -29,6 +29,10 @@ export const registerUser = async (req, res) => {
     const token = generateToken(user._id);
     res.cookie("token", token, cookieOptions);
 
+    // Store user in session for persistence
+    req.session.userId = user._id.toString();
+    req.session.user = { id: user._id, name: user.name, email: user.email, role: user.role };
+
     // Send limited user info
     res.status(201).json({
       user: { id: user._id, name: user.name, email: user.email, role: user.role },
@@ -62,6 +66,10 @@ export const loginUser = async (req, res) => {
     const token = generateToken(user._id);
     res.cookie("token", token, cookieOptions);
 
+    // Store user in session for persistence
+    req.session.userId = user._id.toString();
+    req.session.user = { id: user._id, name: user.name, email: user.email, role: user.role };
+
     res.json({ user: { id: user._id, name: user.name, email: user.email, role: user.role }, token });
   } catch (err) {
     console.error("loginUser error:", err);
@@ -90,6 +98,10 @@ export const googleLogin = async (req, res) => {
     const token = generateToken(user._id);
     res.cookie("token", token, cookieOptions);
 
+    // Store user in session for persistence
+    req.session.userId = user._id.toString();
+    req.session.user = { id: user._id, name: user.name, email: user.email, role: user.role };
+
     res.json({ user: { id: user._id, name: user.name, email: user.email, role: user.role }, token });
   } catch (err) {
     console.error("googleLogin error:", err);
@@ -100,6 +112,12 @@ export const googleLogin = async (req, res) => {
 // POST /api/auth/logout
 export const logoutUser = (req, res) => {
   res.cookie("token", "", { httpOnly: true, expires: new Date(0) });
+
+  // Destroy session
+  req.session.destroy((err) => {
+    if (err) console.error("Session destroy error:", err);
+  });
+
   res.json({ message: "Logged out" });
 };
 

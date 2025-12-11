@@ -11,22 +11,34 @@ const authMiddleware = async (req, res, next) => {
       token = req.headers.authorization.split(" ")[1];
     }
 
-    if (!token) {
-      return res.status(401).json({ message: "Not authorized, no token" });
+    // Try JWT authentication first
+    if (token) {
+      try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        req.user = await User.findById(decoded.id).select("-password");
+
+        if (req.user) {
+          return next();
+        }
+      } catch (jwtError) {
+        console.log("JWT verification failed, checking session...");
+      }
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    // Fallback to session authentication
+    if (req.session && req.session.userId) {
+      req.user = await User.findById(req.session.userId).select("-password");
 
-    req.user = await User.findById(decoded.id).select("-password");
-
-    if (!req.user) {
-      return res.status(401).json({ message: "Not authorized, user not found" });
+      if (req.user) {
+        return next();
+      }
     }
 
-    next();
+    // No valid authentication found
+    return res.status(401).json({ message: "Not authorized, no valid authentication" });
   } catch (error) {
-    console.error(error);
-    res.status(401).json({ message: "Not authorized, token failed" });
+    console.error("Auth middleware error:", error);
+    res.status(401).json({ message: "Not authorized, authentication failed" });
   }
 };
 
