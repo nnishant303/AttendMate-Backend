@@ -14,8 +14,6 @@ import employeeRoutes from "./src/routes/employeeRoutes.js";
 import attendanceRoutes from "./src/routes/attendanceRoutes.js";
 import leaveRoutes from "./src/routes/leaveRoutes.js";
 import eventRoutes from "./src/routes/eventRoutes.js";
-import session from "express-session";
-import MongoStore from "connect-mongo";
 
 dotenv.config();
 connectDB();
