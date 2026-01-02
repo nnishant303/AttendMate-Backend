@@ -17,7 +17,9 @@ const generateToken = (id) => jwt.sign({ id }, process.env.JWT_SECRET, { expires
 // POST /api/auth/register
 export const registerUser = async (req, res) => {
   try {
-    const { name, email, password, role } = req.body;
+    let { name, email, password, role } = req.body;
+    if (email) email = email.trim();
+    if (name) name = name.trim();
     if (!name || !email || !password) return res.status(400).json({ message: "Missing fields" });
 
     const existed = await User.findOne({ email });
@@ -30,8 +32,10 @@ export const registerUser = async (req, res) => {
     res.cookie("token", token, cookieOptions);
 
     // Store user in session for persistence
-    req.session.userId = user._id.toString();
-    req.session.user = { id: user._id, name: user.name, email: user.email, role: user.role };
+    if (req.session) {
+      req.session.userId = user._id.toString();
+      req.session.user = { id: user._id, name: user.name, email: user.email, role: user.role };
+    }
 
     // Send limited user info
     res.status(201).json({
@@ -48,7 +52,8 @@ export const registerUser = async (req, res) => {
 // POST /api/auth/login
 export const loginUser = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    let { email, password } = req.body;
+    if (email) email = email.trim();
     console.log("[authController] loginUser called", { email: email || null });
     if (!email || !password) return res.status(400).json({ message: "Missing credentials" });
 
@@ -75,8 +80,10 @@ export const loginUser = async (req, res) => {
     res.cookie("token", token, cookieOptions);
 
     // Store user in session for persistence
-    req.session.userId = user._id.toString();
-    req.session.user = { id: user._id, name: user.name, email: user.email, role: user.role };
+    if (req.session) {
+      req.session.userId = user._id.toString();
+      req.session.user = { id: user._id, name: user.name, email: user.email, role: user.role };
+    }
 
     res.json({ success: true, user: { id: user._id, name: user.name, email: user.email, role: user.role }, token });
   } catch (err) {

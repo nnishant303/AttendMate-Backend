@@ -1,49 +1,46 @@
 import Attendance from "../models/Attendance.js";
 
-// Helper: minutes between two Date objects
-const calculateDurationMinutes = (start, end) => {
-  if (!start || !end) return 0;
-  const diff = new Date(end) - new Date(start);
-  return Math.max(0, Math.round(diff / 60000));
-};
+const getToday = () => new Date().toISOString().split("T")[0];
 
 // POST /api/attendance/check-in
 export const checkIn = async (req, res) => {
   try {
-    const { employeeId, time, date } = req.body;
-    if (!employeeId || !date) return res.status(400).json({ message: "employeeId and date required" });
+    const { employeeId } = req.body;
+    const date = getToday();
 
-    // Prevent multiple check-ins for same day
-    const existing = await Attendance.findOne({ employeeId, date });
-    if (existing) return res.status(400).json({ message: "Already checked in for today" });
+    if (!employeeId) return res.status(400).json({ message: "employeeId required" });
 
-    // Build ISO timestamp
-    const checkInISO = time && time.includes("T") ? new Date(time) : new Date(`${date}T${time || "00:00:00"}`);
-
-    // Late detection (10:00)
+    const checkInTime = new Date();
     const lateThreshold = new Date(`${date}T10:00:00`);
-    let status = "Present";
-    let lateBy = 0;
-    if (checkInISO > lateThreshold) {
-      status = "Late";
-      lateBy = Math.round((checkInISO - lateThreshold) / 60000);
-    }
 
-    const attendance = await Attendance.create({
-      employeeId,
-      date,
-      status,
-      checkInTime: checkInISO,
-      lateBy,
-    });
+    await Attendance.findOneAndUpdate(
+      { date },
+      { $setOnInsert: { date, employees: [] } },
+      { upsert: true }
+    );
 
+    const exists = await Attendance.findOne({ date, "employees.employeeId": employeeId });
+    if (exists) return res.status(400).json({ message: "Already checked in today" });
 
-    // Emit Socket.io event for real-time updates
-    try { req.io?.emit("attendanceUpdated", attendance); } catch (e) {/*ignore*/ }
+    await Attendance.updateOne(
+      { date },
+      {
+        $push: {
+          employees: {
+            employeeId,
+            checkInTime,
+            status: checkInTime > lateThreshold ? "Late" : "Present",
+            lateBy: checkInTime > lateThreshold
+              ? Math.round((checkInTime - lateThreshold) / 60000)
+              : 0
+          }
+        }
+      }
+    );
 
-    res.status(201).json({ message: "Checked in successfully", attendance });
+    res.json({ message: "Checked in successfully" });
   } catch (err) {
-    console.error("checkIn error:", err);
+    console.log("checkIn error:", err);
     res.status(500).json({ message: err.message });
   }
 };
@@ -51,27 +48,23 @@ export const checkIn = async (req, res) => {
 // POST /api/attendance/check-out
 export const checkOut = async (req, res) => {
   try {
-    const { employeeId, time, date } = req.body;
-    if (!employeeId || !date) return res.status(400).json({ message: "employeeId and date required" });
+    const { employeeId } = req.body;
+    const date = getToday();
 
-    const attendance = await Attendance.findOne({ employeeId, date });
-    if (!attendance) return res.status(404).json({ message: "Attendance record not found" });
-    if (attendance.checkOutTime) return res.status(400).json({ message: "Already checked out" });
+    const doc = await Attendance.findOne({ date, "employees.employeeId": employeeId });
+    if (!doc) return res.status(404).json({ message: "Not checked in" });
 
-    const checkOutISO = time && time.includes("T") ? new Date(time) : new Date(`${date}T${time || "00:00:00"}`);
+    const emp = doc.employees.find(e => e.employeeId === employeeId);
+    if (emp.checkOutTime) return res.status(400).json({ message: "Already checked out" });
 
-    attendance.checkOutTime = checkOutISO;
-    attendance.duration = calculateDurationMinutes(attendance.checkInTime, checkOutISO);
+    emp.checkOutTime = new Date();
+    emp.duration = Math.round((emp.checkOutTime - emp.checkInTime) / 60000);
 
-    // If checkInTime missing, keep status logic simple
-    await attendance.save();
+    await doc.save();
 
-    // Emit Socket.io event for real-time updates
-    try { req.io?.emit("attendanceUpdated", attendance); } catch (e) {/*ignore*/ }
-
-    res.json({ message: "Checked out successfully", attendance });
+    res.json({ message: "Checked out successfully" });
   } catch (err) {
-    console.error("checkOut error:", err);
+    console.log("checkOut error:", err);
     res.status(500).json({ message: err.message });
   }
 };
@@ -79,44 +72,11 @@ export const checkOut = async (req, res) => {
 // GET /api/attendance?date=YYYY-MM-DD
 export const getAllAttendance = async (req, res) => {
   try {
-    const { date, page = 1, limit = 100 } = req.query;
-    const query = {};
-    if (date) query.date = date;
-
-    const records = await Attendance.find(query)
-      .sort({ date: -1, createdAt: -1 })
-      .skip((page - 1) * limit)
-      .limit(Number(limit));
-
+    const { date } = req.query;
+    const q = date ? { date } : {};
+    const records = await Attendance.find(q).sort({ date: -1 });
     res.json(records);
   } catch (err) {
-    console.error("getAllAttendance error:", err);
-    res.status(500).json({ message: err.message });
-  }
-};
-
-// GET /api/attendance/:employeeId
-export const getAttendanceByEmployee = async (req, res) => {
-  try {
-    const { from, to, page = 1, limit = 100 } = req.query;
-    const employeeId = req.params.employeeId;
-    if (!employeeId) return res.status(400).json({ message: "employeeId required" });
-
-    const q = { employeeId };
-    if (from || to) {
-      q.date = {};
-      if (from) q.date.$gte = from;
-      if (to) q.date.$lte = to;
-    }
-
-    const records = await Attendance.find(q)
-      .sort({ date: -1 })
-      .skip((page - 1) * limit)
-      .limit(Number(limit));
-
-    res.json(records);
-  } catch (err) {
-    console.error("getAttendanceByEmployee error:", err);
     res.status(500).json({ message: err.message });
   }
 };
