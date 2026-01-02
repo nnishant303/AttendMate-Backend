@@ -38,14 +38,23 @@ export const sendOtp = async (req, res) => {
 
         // Send Email
         const message = `Your password reset OTP is: ${otp}. It expires in 10 minutes.`;
-        await sendEmail({
-            to: user.email,
-            subject: "Password Reset OTP",
-            text: message,
-            html: `<p>Your password reset OTP is: <b>${otp}</b></p><p>It expires in 10 minutes.</p>`,
-        });
-
-        res.status(200).json({ message: "If your email is registered, you will receive an OTP." });
+        try {
+            await sendEmail({
+                to: user.email,
+                subject: "Password Reset OTP",
+                text: message,
+                html: `<p>Your password reset OTP is: <b>${otp}</b></p><p>It expires in 10 minutes.</p>`,
+            });
+            res.status(200).json({ message: "OTP sent successfully to your email." });
+        } catch (emailErr) {
+            console.error("Critical: Email failed to send, but OTP is generated:", emailErr.message);
+            // In development or if SMTP is flaky, we might want to still allow the user to proceed if they have access to logs
+            // For now, we return 200 but log the failure, so the user can check the backend console for the OTP.
+            res.status(200).json({
+                message: "If your email is registered, you will receive an OTP.",
+                notice: "Email delivery failed, check server logs if this is a test environment."
+            });
+        }
 
     } catch (err) {
         console.error("sendOtp error:", err);

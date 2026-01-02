@@ -21,16 +21,68 @@ connectDB();
 const app = express();
 const httpServer = createServer(app);
 
-const FRONTEND_URLS = (process.env.FRONTEND_URLS || "http://localhost:5174,http://localhost:5173,http://localhost:8100,http://localhost:8200").split(",").map(s => s.trim());
+// --- CORS CONFIGURATION ---
+const ALLOWED_ORIGINS = [
+  "http://localhost:5173",
+  "http://localhost:5174",
+  "http://localhost:3000",
+  "http://localhost:8100",
+  "http://localhost:8200",
+  "https://localhost",
+  "http://localhost",
+];
+
+// Add origins from environment variables if present
+if (process.env.FRONTEND_URLS) {
+  process.env.FRONTEND_URLS.split(",").forEach(url => {
+    const trimmed = url.trim();
+    if (trimmed && !ALLOWED_ORIGINS.includes(trimmed)) {
+      ALLOWED_ORIGINS.push(trimmed);
+    }
+  });
+}
+
+const isOriginAllowed = (origin) => {
+  if (!origin) return true; // Allow non-browser requests (like Postman)
+  if (ALLOWED_ORIGINS.includes(origin)) return true;
+  if (origin.endsWith(".vercel.app")) return true; // Support dynamic Vercel previews
+  if (origin.includes("localhost:")) return true; // Support any local port
+  return false;
+};
+
+const corsOptions = {
+  origin: function (origin, callback) {
+    if (isOriginAllowed(origin)) {
+      callback(null, true);
+    } else {
+      console.error("Blocked by CORS:", origin);
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"],
+};
 
 const io = new Server(httpServer, {
   cors: {
-    origin: FRONTEND_URLS,
+    origin: (origin, callback) => {
+      if (isOriginAllowed(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     credentials: true,
   },
 });
 
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions));
+// --- END CORS CONFIGURATION ---
+app.use(helmet());
+app.use(morgan("dev"));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -47,25 +99,6 @@ app.use(session({
     maxAge: 1000 * 60 * 60 * 24 // 1 day
   }
 }));
-
-const corsOptions = {
-  origin: function (origin, callback) {
-    if (!origin) return callback(null, true);
-    if (FRONTEND_URLS.indexOf(origin) !== -1) {
-      return callback(null, true);
-    }
-    console.error("Blocked by CORS:", origin);
-    return callback(new Error('Not allowed by CORS'));
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-};
-
-app.use(cors(corsOptions));
-app.options('*', cors(corsOptions));
-app.use(helmet());
-app.use(morgan("dev"));
 
 app.use((req, res, next) => {
   req.io = io;

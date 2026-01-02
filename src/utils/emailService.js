@@ -6,14 +6,21 @@ export const sendEmail = async ({ to, subject, text, html }) => {
 
         // Check if real SMTP credentials are provided
         if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
+            const port = parseInt(process.env.SMTP_PORT) || 587;
             transporter = nodemailer.createTransport({
                 host: process.env.SMTP_HOST,
-                port: process.env.SMTP_PORT || 587,
-                secure: false,
+                port: port,
+                secure: port === 465, // Use true for 465, false for other ports
                 auth: {
                     user: process.env.SMTP_USER,
                     pass: process.env.SMTP_PASS,
                 },
+                tls: {
+                    rejectUnauthorized: false // Often needed for cloud environments
+                },
+                connectionTimeout: 10000, // 10 seconds timeout
+                greetingTimeout: 10000,
+                socketTimeout: 15000,
             });
         } else {
             // Fallback to Ethereal (Test Account) or Console Log
