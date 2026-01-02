@@ -6,7 +6,16 @@ const userSchema = new mongoose.Schema({
   password: { type: String },
   googleId: { type: String },
   picture: { type: String },
-  role: { type: String, enum: ["hr"], default: "hr" },
+  role: { type: String, enum: ["hr", "employee"], default: "employee" },
+
+  // Forgot Password / OTP fields
+  otp: { type: String }, // Hashed OTP
+  otpExpires: { type: Date },
+  otpAttempts: { type: Number, default: 0 },
+
+  // Password Reset Token fields
+  resetPasswordToken: { type: String }, // Hashed token
+  resetPasswordExpires: { type: Date },
 }, { timestamps: true });
 
 

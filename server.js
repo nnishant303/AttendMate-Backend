@@ -14,6 +14,8 @@ import employeeRoutes from "./src/routes/employeeRoutes.js";
 import attendanceRoutes from "./src/routes/attendanceRoutes.js";
 import leaveRoutes from "./src/routes/leaveRoutes.js";
 import eventRoutes from "./src/routes/eventRoutes.js";
+import session from "express-session";
+import MongoStore from "connect-mongo";
 
 dotenv.config();
 connectDB();
@@ -36,6 +38,19 @@ const io = new Server(httpServer, {
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+
+// Session Middleware
+app.use(session({
+  secret: process.env.JWT_SECRET || "supersecretkey",
+  resave: false,
+  saveUninitialized: false,
+  store: MongoStore.create({ mongoUrl: process.env.MONGO_URI }),
+  cookie: {
+    secure: process.env.NODE_ENV === "production",
+    httpOnly: true,
+    maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
+  }
+}));
 
 // CORS options that validate origin against allowed list and echo back the origin
 const corsOptions = {

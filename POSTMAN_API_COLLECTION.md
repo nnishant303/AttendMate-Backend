@@ -5,12 +5,12 @@
 ---
 
 ## 📋 Table of Contents
-1. [Health Check](#health-check)
-2. [Authentication](#authentication)
-3. [Employee Management](#employee-management)
-4. [Attendance](#attendance)
-5. [Leave Management](#leave-management)
-6. [Events](#events)
+1. [Health Check](#health-check) — **Status:** Complete ✅
+2. [Authentication](#authentication) — **Status:** Complete ✅
+3. [Employee Management](#employee-management) — **Status:** Complete ✅
+4. [Attendance](#attendance) — **Status:** Blocked (apply_patch failed) ⛔
+5. [Leave Management](#leave-management) — **Status:** Not started ⬜
+6. [Events](#events) — **Status:** Not started ⬜
 
 ---
 
