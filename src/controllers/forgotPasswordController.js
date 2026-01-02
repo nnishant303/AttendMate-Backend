@@ -39,20 +39,30 @@ export const sendOtp = async (req, res) => {
         // Send Email
         const message = `Your password reset OTP is: ${otp}. It expires in 10 minutes.`;
         try {
-            await sendEmail({
+            const info = await sendEmail({
                 to: user.email,
                 subject: "Password Reset OTP",
                 text: message,
                 html: `<p>Your password reset OTP is: <b>${otp}</b></p><p>It expires in 10 minutes.</p>`,
             });
-            res.status(200).json({ message: "OTP sent successfully to your email." });
+
+            // If it's a mock or test account, provide that info in the response
+            const isMock = info.messageId.startsWith("mock-id-");
+            const previewUrl = info.preview || null;
+
+            res.status(200).json({
+                success: true,
+                message: isMock ? "OTP generated (see server logs for development)" : "OTP sent successfully to your email.",
+                testMode: isMock,
+                previewUrl: previewUrl
+            });
         } catch (emailErr) {
             console.error("Critical: Email failed to send, but OTP is generated:", emailErr.message);
-            // In development or if SMTP is flaky, we might want to still allow the user to proceed if they have access to logs
-            // For now, we return 200 but log the failure, so the user can check the backend console for the OTP.
+            // Even if email fails, we return the OTP in the log so the dev can proceed
             res.status(200).json({
-                message: "If your email is registered, you will receive an OTP.",
-                notice: "Email delivery failed, check server logs if this is a test environment."
+                success: true,
+                message: "OTP generated (Email delivery failed). Check server logs.",
+                error: emailErr.message
             });
         }
 

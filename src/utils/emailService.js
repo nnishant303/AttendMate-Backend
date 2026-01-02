@@ -4,32 +4,31 @@ export const sendEmail = async ({ to, subject, text, html }) => {
     try {
         let transporter;
 
-        // Check if real SMTP credentials are provided
-        if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
+        const isProduction = process.env.NODE_ENV === "production";
+        const hasSmtp = process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS;
+
+        if (hasSmtp) {
             const port = parseInt(process.env.SMTP_PORT) || 587;
             transporter = nodemailer.createTransport({
                 host: process.env.SMTP_HOST,
                 port: port,
-                secure: port === 465, // Use true for 465, false for other ports
+                secure: port === 465,
                 auth: {
                     user: process.env.SMTP_USER,
                     pass: process.env.SMTP_PASS,
                 },
                 tls: {
-                    rejectUnauthorized: false // Often needed for cloud environments
+                    rejectUnauthorized: false
                 },
-                connectionTimeout: 10000, // 10 seconds timeout
+                connectionTimeout: 10000,
                 greetingTimeout: 10000,
                 socketTimeout: 15000,
             });
-        } else {
-            // Fallback to Ethereal (Test Account) or Console Log
-            console.log("No SMTP credentials found in .env. Attempting to generate test account...");
-
+        } else if (!isProduction) {
+            console.log("No SMTP credentials found. Attempting to generate test account...");
             try {
                 const testAccount = await nodemailer.createTestAccount();
-                console.log("Test account created:", testAccount.user);
-
+                console.log("Test account created (Ethereal):", testAccount.user);
                 transporter = nodemailer.createTransport({
                     host: "smtp.ethereal.email",
                     port: 587,
@@ -40,11 +39,12 @@ export const sendEmail = async ({ to, subject, text, html }) => {
                     },
                 });
             } catch (testError) {
-                console.warn("Failed to create test account. Falling back to console logging.", testError.message);
-                // Fully Mock Transporter if Ethereal fails
-                console.log(`[MOCK EMAIL] To: ${to} | Subject: ${subject} | Content: ${text}`);
-                return { messageId: "mock-id-123", preview: "See Console" };
+                console.warn("Ethereal failed. Falling back to console logging.");
+                console.log(`\n--- [MOCK EMAIL] ---\nTo: ${to}\nSubject: ${subject}\nContent: ${text}\n--------------------\n`);
+                return { messageId: "mock-id-" + Date.now(), preview: "See Console" };
             }
+        } else {
+            throw new Error("SMTP credentials are required in production but were not found in environment variables.");
         }
 
         const info = await transporter.sendMail({
@@ -57,7 +57,6 @@ export const sendEmail = async ({ to, subject, text, html }) => {
 
         console.log("Email sent: %s", info.messageId);
 
-        // If using Ethereal, log the preview URL
         const previewUrl = nodemailer.getTestMessageUrl(info);
         if (previewUrl) {
             console.log("Preview URL: %s", previewUrl);
@@ -66,11 +65,7 @@ export const sendEmail = async ({ to, subject, text, html }) => {
         return info;
 
     } catch (error) {
-        console.error("Error sending email:", error);
-        // Do not throw error to avoid crashing the flow if email service is down,
-        // unless it's critical. For OTP, it is critical, but locally we might want to proceed.
-        // Let's rethrow to let the controller handle it, but the controller currently 500s.
-        // The user saw "Server Error" which means 500.
-        throw new Error(`Email sending failed: ${error.message}`);
+        console.error("sendEmail Error:", error.message);
+        throw error; // Rethrow to let the controller know it failed
     }
 };
