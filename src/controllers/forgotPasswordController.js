@@ -21,6 +21,12 @@ export const sendOtp = async (req, res) => {
             return res.status(404).json({ message: "Email is not registered" });
         }
 
+        // Rate Limiting: Check if OTP was sent recently (e.g., in the last 60 seconds)
+        if (user.otpLastSent && (Date.now() - user.otpLastSent < 60 * 1000)) {
+            const waitTime = Math.ceil((60 * 1000 - (Date.now() - user.otpLastSent)) / 1000);
+            return res.status(429).json({ message: `Please wait ${waitTime} seconds before requesting a new OTP.` });
+        }
+
         // Generate and Hash OTP
         const otp = generateOTP();
         console.log("Generated OTP for " + email + ":", otp); // Log for testing
@@ -34,6 +40,7 @@ export const sendOtp = async (req, res) => {
         user.otp = hashedOtp;
         user.otpExpires = otpExpires;
         user.otpAttempts = 0; // Reset attempts
+        user.otpLastSent = Date.now();
         await user.save();
 
         // Send Email
@@ -58,7 +65,7 @@ export const sendOtp = async (req, res) => {
                 debugOtp: (isMock || !!info.otpUsed) ? (info.otpUsed || otp) : "******"
             });
         } catch (emailErr) {
-            console.error("Critical: Email failed to send, but OTP is generated:", emailErr.message);
+            console.error("Critical: Email failed to send, but OTP is generated for " + email + ":", emailErr.message);
             // Even if email fails, we return the OTP in the JSON so the dev can proceed
             res.status(200).json({
                 success: true,
@@ -98,7 +105,7 @@ export const verifyOtp = async (req, res) => {
         }
 
         // Verify OTP
-        const isMatch = await bcrypt.compare(otp, user.otp);
+        const isMatch = await bcrypt.compare(String(otp), user.otp);
         if (!isMatch) {
             user.otpAttempts += 1;
             await user.save();
@@ -132,13 +139,11 @@ export const resetPassword = async (req, res) => {
         const newPassword = req.body.newPassword || req.body.password;
 
         if (!email || !resetToken || !newPassword) {
-            console.log("[resetPassword] Missing fields:", {
-                hasEmail: !!email,
-                hasToken: !!resetToken,
-                hasPassword: !!newPassword,
-                receivedKeys: Object.keys(req.body)
-            });
             return res.status(400).json({ message: "All fields are required" });
+        }
+
+        if (String(newPassword).length < 6) {
+            return res.status(400).json({ message: "Password must be at least 6 characters long" });
         }
 
         const user = await User.findOne({ email });
@@ -150,7 +155,7 @@ export const resetPassword = async (req, res) => {
         }
 
         // Verify Reset Token
-        const isTokenMatch = await bcrypt.compare(resetToken, user.resetPasswordToken);
+        const isTokenMatch = await bcrypt.compare(String(resetToken), user.resetPasswordToken);
         if (!isTokenMatch) {
             return res.status(400).json({ message: "Invalid reset token" });
         }

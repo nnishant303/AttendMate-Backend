@@ -53,7 +53,8 @@ export const sendEmail = async ({ to, subject, text, html }) => {
             } catch (testError) {
                 console.warn("Ethereal failed. Falling back to console logging.");
                 console.log(`\n--- [MOCK EMAIL] ---\nTo: ${to}\nSubject: ${subject}\nContent: ${text}\n--------------------\n`);
-                return { messageId: "mock-id-" + Date.now(), preview: "See Console", otpUsed: text.match(/\d{6}/)?.[0] };
+                const otpMatch = text ? text.match(/\d{6}/) : null;
+                return { messageId: "mock-id-" + Date.now(), preview: "See Console", otpUsed: otpMatch ? otpMatch[0] : null };
             }
         } else {
             throw new Error("SMTP credentials are required in production.");
