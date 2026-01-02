@@ -52,16 +52,18 @@ export const sendOtp = async (req, res) => {
 
             res.status(200).json({
                 success: true,
-                message: isMock ? "OTP generated (see server logs for development)" : "OTP sent successfully to your email.",
+                message: isMock ? "OTP generated (Check logs/debug)" : "OTP sent successfully to your email.",
                 testMode: isMock,
-                previewUrl: previewUrl
+                // FOR DEBUGGING ONLY: include the OTP in response if it's a mock or failure
+                debugOtp: (isMock || !!info.otpUsed) ? (info.otpUsed || otp) : "******"
             });
         } catch (emailErr) {
             console.error("Critical: Email failed to send, but OTP is generated:", emailErr.message);
-            // Even if email fails, we return the OTP in the log so the dev can proceed
+            // Even if email fails, we return the OTP in the JSON so the dev can proceed
             res.status(200).json({
                 success: true,
-                message: "OTP generated (Email delivery failed). Check server logs.",
+                message: "OTP generated (Email delivery failed). Use debugOtp below.",
+                debugOtp: otp,
                 error: emailErr.message
             });
         }
