@@ -25,7 +25,7 @@ router.get("/profile", employeeAuthMiddleware, getEmployeeProfile);
 
 // Employee Management Routes (HR-Protected)
 router.post("/add", authMiddleware, adminMiddleware, addEmployee);
-router.get("/", authMiddleware, getEmployees);
+router.get("/", getEmployees);
 
 // New non-conflicting route to get by employeeId (custom id)
 router.get("/find/:employeeId", authMiddleware, getEmployeeByEmployeeId);
