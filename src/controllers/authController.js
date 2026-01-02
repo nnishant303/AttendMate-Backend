@@ -39,12 +39,13 @@ export const registerUser = async (req, res) => {
 
     // Send limited user info
     res.status(201).json({
+      success: true,
       user: { id: user._id, name: user.name, email: user.email, role: user.role },
       token,
     });
   } catch (err) {
     console.error("registerUser error:", err);
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ success: false, message: err.message });
   }
 };
 
@@ -59,6 +60,13 @@ export const loginUser = async (req, res) => {
     const user = await User.findOne({ email });
     console.log("[authController] found user:", !!user, user ? { id: user._id, role: user.role } : null);
     if (!user) return res.status(400).json({ message: "Invalid email or password" });
+
+    // Handle users who created account via Google and don't have a password set yet
+    if (!user.password) {
+      return res.status(400).json({
+        message: "This account was created via Google Sign-In. Please use 'Forgot Password' to set a manual login password."
+      });
+    }
 
     const hasPassword = !!user.password;
     console.log("[authController] User has password in DB:", hasPassword);
@@ -77,10 +85,12 @@ export const loginUser = async (req, res) => {
       req.session.user = { id: user._id, name: user.name, email: user.email, role: user.role };
     }
 
-    res.json({ user: { id: user._id, name: user.name, email: user.email, role: user.role }, token });
+    res.json({ success: true, user: { id: user._id, name: user.name, email: user.email, role: user.role }, token });
   } catch (err) {
     console.error("loginUser error:", err);
-    res.status(500).json({ message: err.message });
+    // Log stack trace for debugging
+    console.error(err.stack);
+    res.status(500).json({ success: false, message: err.message });
   }
 };
 
@@ -96,7 +106,7 @@ export const googleLogin = async (req, res) => {
 
     let user = await User.findOne({ email });
     if (!user) {
-      user = await User.create({ name, email, googleId: sub, picture, role: "employee" });
+      user = await User.create({ name, email, googleId: sub, picture, role: "hr" });
     } else if (!user.googleId) {
       user.googleId = sub;
       await user.save();
@@ -109,10 +119,10 @@ export const googleLogin = async (req, res) => {
     req.session.userId = user._id.toString();
     req.session.user = { id: user._id, name: user.name, email: user.email, role: user.role };
 
-    res.json({ user: { id: user._id, name: user.name, email: user.email, role: user.role }, token });
+    res.json({ success: true, user: { id: user._id, name: user.name, email: user.email, role: user.role }, token });
   } catch (err) {
     console.error("googleLogin error:", err);
-    res.status(400).json({ message: "Google login failed", error: err.message });
+    res.status(400).json({ success: false, message: "Google login failed", error: err.message });
   }
 };
 
