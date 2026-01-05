@@ -1,7 +1,35 @@
 import nodemailer from "nodemailer";
+import { Resend } from 'resend';
 
 export const sendEmail = async ({ to, subject, text, html }) => {
     try {
+        // Check if Resend API key is available
+        const resendApiKey = process.env.RESEND_API_KEY;
+
+        if (resendApiKey) {
+            // Use Resend (recommended for production)
+            const resend = new Resend(resendApiKey);
+
+            const fromEmail = process.env.SMTP_FROM || 'onboarding@resend.dev';
+
+            const { data, error } = await resend.emails.send({
+                from: fromEmail,
+                to: [to],
+                subject: subject,
+                text: text,
+                html: html,
+            });
+
+            if (error) {
+                console.error("Resend Error:", error);
+                throw new Error(`Email sending failed: ${error.message}`);
+            }
+
+            console.log("Email sent via Resend:", data.id);
+            return { messageId: data.id, service: 'resend' };
+        }
+
+        // Fallback to SMTP if Resend is not configured
         let transporter;
 
         const isProduction = process.env.NODE_ENV === "production";
@@ -57,7 +85,7 @@ export const sendEmail = async ({ to, subject, text, html }) => {
                 return { messageId: "mock-id-" + Date.now(), preview: "See Console", otpUsed: otpMatch ? otpMatch[0] : null };
             }
         } else {
-            throw new Error("SMTP credentials are required in production.");
+            throw new Error("Email service not configured. Please set RESEND_API_KEY or SMTP credentials.");
         }
 
         const fromEmail = process.env.SMTP_FROM || process.env.SMTP_USER || 'no-reply@attendmate.com';
