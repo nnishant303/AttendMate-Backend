@@ -10,7 +10,7 @@ export const sendEmail = async ({ to, subject, text, html }) => {
             // Use Resend (recommended for production)
             const resend = new Resend(resendApiKey);
 
-            const fromEmail = process.env.SMTP_FROM || 'onboarding@resend.dev';
+            const fromEmail = process.env.SMTP_FROM || 'AttendMate <onboarding@resend.dev>';
 
             const { data, error } = await resend.emails.send({
                 from: fromEmail,
