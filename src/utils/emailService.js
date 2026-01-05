@@ -3,7 +3,41 @@ import { Resend } from 'resend';
 
 export const sendEmail = async ({ to, subject, text, html }) => {
     try {
-        // Check if Resend API key is available
+        // Option 1: Try Brevo (Sendinblue) - works without domain verification
+        const brevoApiKey = process.env.BREVO_API_KEY;
+
+        if (brevoApiKey) {
+            const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+                method: 'POST',
+                headers: {
+                    'accept': 'application/json',
+                    'api-key': brevoApiKey,
+                    'content-type': 'application/json'
+                },
+                body: JSON.stringify({
+                    sender: {
+                        name: "AttendMate Support",
+                        email: process.env.BREVO_FROM_EMAIL || "noreply@attendmate.com"
+                    },
+                    to: [{ email: to }],
+                    subject: subject,
+                    textContent: text,
+                    htmlContent: html
+                })
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                console.error("Brevo Error:", error);
+                throw new Error(`Brevo failed: ${error.message || 'Unknown error'}`);
+            }
+
+            const data = await response.json();
+            console.log("Email sent via Brevo:", data.messageId);
+            return { messageId: data.messageId, service: 'brevo' };
+        }
+
+        // Option 2: Try Resend (requires domain verification)
         const resendApiKey = process.env.RESEND_API_KEY;
 
         if (resendApiKey) {
