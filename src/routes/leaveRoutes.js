@@ -5,14 +5,14 @@ import {
   getLeavesByEmployee,
   actionLeave,
 } from "../controllers/leaveController.js";
-import authMiddleware from "../middleware/authMiddleware.js";
+import combinedAuthMiddleware from "../middleware/combinedAuthMiddleware.js";
 import adminMiddleware from "../middleware/adminMiddleware.js";
 
 const router = express.Router();
 
-router.post("/request", authMiddleware, requestLeave);
-router.get("/", authMiddleware, adminMiddleware, getLeaves);
-router.get("/employee/:employeeId", authMiddleware, getLeavesByEmployee);
-router.put("/:id", authMiddleware, adminMiddleware, actionLeave);
+router.post("/request", combinedAuthMiddleware, requestLeave);
+router.get("/", combinedAuthMiddleware, adminMiddleware, getLeaves);
+router.get("/employee/:employeeId", combinedAuthMiddleware, getLeavesByEmployee);
+router.put("/:date/:employeeId", combinedAuthMiddleware, adminMiddleware, actionLeave);
 
 export default router;
