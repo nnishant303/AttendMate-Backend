@@ -1,13 +1,18 @@
 import mongoose from "mongoose";
 
-const leaveSchema = new mongoose.Schema({
-  employeeId: { type: String, required: true },
-  leaveType: { type: String, required: true }, 
-  fromDate: { type: String, required: true },
-  toDate: { type: String, required: true },
-  reason: { type: String, required: true },
-  status: { type: String, enum: ["Pending", "Approved", "Rejected"], default: "Pending" },
+const leaveEmployeeSchema = new mongoose.Schema({
+  employeeId: String,
+  leaveType: String,
+  fromDate: String,
+  toDate: String,
+  reason: String,
+  status: { type: String, enum: ["Pending", "Approved", "Rejected"],default: "Pending" },
   appliedOn: { type: Date, default: Date.now }
-}, { timestamps: true });
+});
+
+const leaveSchema = new mongoose.Schema({
+  date: String,      
+  employees: [leaveEmployeeSchema]
+});
 
 export default mongoose.model("Leave", leaveSchema);
