@@ -12,7 +12,7 @@ const leaveEmployeeSchema = new mongoose.Schema({
 
 const leaveSchema = new mongoose.Schema({
   date: String,      
-  employees: [leaveEmployeeSchema]
+  leave_request: [leaveEmployeeSchema]
 });
 
 export default mongoose.model("Leave", leaveSchema);

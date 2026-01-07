@@ -21,14 +21,14 @@ export const requestLeave = async (req, res) => {
 
     await Leave.findOneAndUpdate(
       { date },
-      { $setOnInsert: { date, employees: [] } },
+      { $setOnInsert: { date, leave_request: [] } },
       { upsert: true }
     );
 
     const exists = await Leave.findOne({
       date,
-      "employees.employeeId": employeeId,
-      "employees.status": { $ne: "Rejected" }
+      "leave_request.employeeId": employeeId,
+      "leave_request.status": { $ne: "Rejected" }
     });
 
     if (exists)
@@ -38,7 +38,7 @@ export const requestLeave = async (req, res) => {
       { date },
       {
         $push: {
-          employees: {
+          leave_request: {
             employeeId,
             leaveType,
             fromDate,
@@ -73,11 +73,11 @@ export const getLeaves = async (req, res) => {
 
 export const getLeavesByEmployee = async (req, res) => {
   try {
-    const leaves = await Leave.find({ "employees.employeeId": req.params.employeeId });
+    const leaves = await Leave.find({ "leave_request.employeeId": req.params.employeeId });
 
     const result = leaves.map(doc => ({
       date: doc.date,
-      employees: doc.employees.filter(e => e.employeeId === req.params.employeeId)
+      leave_request: doc.leave_request.filter(e => e.employeeId === req.params.employeeId)
     }));
 
     res.json(result);
@@ -97,8 +97,8 @@ export const actionLeave = async (req, res) => {
       return res.status(400).json({ message: "Invalid status" });
 
     const leave = await Leave.findOneAndUpdate(
-      { date, "employees.employeeId": employeeId },
-      { $set: { "employees.$.status": status } },
+      { date, "leave_request.employeeId": employeeId },
+      { $set: { "leave_request.$.status": status } },
       { new: true }
     );
 

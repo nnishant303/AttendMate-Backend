@@ -82,3 +82,28 @@ export const getEmployeeProfile = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
+/* ================= REGISTER/UPDATE FCM TOKEN ================= */
+export const registerFCMToken = async (req, res) => {
+  try {
+    if (!req.employee)
+      return res.status(401).json({ message: "Not authenticated" });
+
+    const { fcmToken } = req.body;
+
+    if (!fcmToken) {
+      return res.status(400).json({ message: "FCM token is required" });
+    }
+
+    req.employee.fcmToken = fcmToken;
+    await req.employee.save();
+
+    res.json({
+      message: "FCM token registered successfully",
+      employeeId: req.employee.employeeId,
+    });
+  } catch (err) {
+    console.error("registerFCMToken error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};

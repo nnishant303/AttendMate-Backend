@@ -13,7 +13,8 @@ const employeeSchema = new mongoose.Schema({
   address: { type: String },
   dateOfBirth: { type: Date },
   gender: { type: String },
-  image: { type: String }
+  image: { type: String },
+  fcmToken: { type: String } // Firebase Cloud Messaging token for push notifications
 }, { timestamps: true });
 
 export default mongoose.model("Employee", employeeSchema);

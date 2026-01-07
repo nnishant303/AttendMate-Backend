@@ -11,6 +11,7 @@ import {
 import {
   employeeLogin,
   getEmployeeProfile,
+  registerFCMToken,
 } from "../controllers/employeeAuthController.js";
 
 import authMiddleware from "../middleware/authMiddleware.js";
@@ -22,6 +23,7 @@ const router = express.Router();
 // Employee Authentication Routes (Public & Employee-Protected)
 router.post("/login", employeeLogin);
 router.get("/profile", employeeAuthMiddleware, getEmployeeProfile);
+router.post("/register-fcm-token", employeeAuthMiddleware, registerFCMToken);
 
 // Employee Management Routes (HR-Protected)
 router.post("/add", authMiddleware, adminMiddleware, addEmployee);

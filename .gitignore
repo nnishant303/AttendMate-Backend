@@ -16,3 +16,6 @@ yarn-error.log*
 # OS files
 .DS_Store
 Thumbs.db
+
+# Firebase credentials
+attendance-notifications-ce3eb-firebase-adminsdk-fbsvc-82a9e12b77.json
