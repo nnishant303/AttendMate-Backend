@@ -2,13 +2,13 @@ import mongoose from "mongoose";
 
 const notificationSchema = new mongoose.Schema({
   recipientId: { type: String, required: true },
-  recipientType: { type: String, enum: ["user", "employee"], required: true },
+  recipientType: { type: String, enum: ["user", "employee", "User", "Employee"], required: true },
   title: { type: String, required: true },
   message: { type: String, required: true },
-  type: { 
-    type: String, 
-    enum: ["attendance", "leave", "event", "system", "employee", "hr"], 
-    default: "system" 
+  type: {
+    type: String,
+    enum: ["attendance", "leave", "event", "system", "employee", "hr"],
+    default: "system"
   },
   read: { type: Boolean, default: false },
   link: { type: String }, // Optional URL to related resource
