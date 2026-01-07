@@ -7,7 +7,7 @@ import { sendPushNotification, sendPushNotificationToMultiple } from "../utils/f
 // @access  Private (HR/System)
 export const createNotification = async (req, res) => {
   try {
-    const { recipientId, recipientType, title, message, type, link, metadata } = req.body;
+    let { recipientId, recipientType, title, message, type, link, metadata } = req.body;
 
     if (!recipientId || !recipientType || !title || !message) {
       return res.status(400).json({ message: "Required fields: recipientId, recipientType, title, message" });
@@ -16,9 +16,22 @@ export const createNotification = async (req, res) => {
     // Validate recipient if it's an employee and get employee object for reuse
     let employee = null;
     if (recipientType === "employee") {
+      // 1. Try finding by public ID (e.g. EMP001)
       employee = await Employee.findOne({ employeeId: recipientId });
+
+      // 2. If not found, try finding by MongoDB _id
+      if (!employee && recipientId.match(/^[0-9a-fA-F]{24}$/)) {
+        employee = await Employee.findById(recipientId);
+      }
+
       if (!employee) {
         return res.status(404).json({ message: `Employee with ID ${recipientId} not found` });
+      }
+
+      // CRITICAL FIX: Standardize usage. Storage always uses the public 'employeeId'.
+      // If frontend sent _id, we swap it here.
+      if (employee.employeeId) {
+        recipientId = employee.employeeId;
       }
     }
 
