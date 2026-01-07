@@ -15,6 +15,7 @@ import attendanceRoutes from "./src/routes/attendanceRoutes.js";
 import leaveRoutes from "./src/routes/leaveRoutes.js";
 import eventRoutes from "./src/routes/eventRoutes.js";
 import notificationRoutes from "./src/routes/notificationRoutes.js";
+import helpRoutes from "./src/routes/helpRoutes.js";
 
 dotenv.config();
 connectDB();
@@ -115,6 +116,7 @@ app.use("/api/attendance", attendanceRoutes);
 app.use("/api/leaves", leaveRoutes);
 app.use("/api/events", eventRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/help", helpRoutes);
 
 
 app.use((req, res) => res.status(404).json({ message: "Route not found" }));
