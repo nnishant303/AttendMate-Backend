@@ -58,8 +58,9 @@ const corsOptions = {
     if (isOriginAllowed(origin)) {
       callback(null, true);
     } else {
+      // Do not throw — throwing makes OPTIONS preflight return 500 and breaks login
       console.error("Blocked by CORS:", origin);
-      callback(new Error("Not allowed by CORS"));
+      callback(null, false);
     }
   },
   credentials: true,
@@ -73,7 +74,8 @@ const io = new Server(httpServer, {
       if (isOriginAllowed(origin)) {
         callback(null, true);
       } else {
-        callback(new Error("Not allowed by CORS"));
+        console.error("Blocked by Socket.IO CORS:", origin);
+        callback(null, false);
       }
     },
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
