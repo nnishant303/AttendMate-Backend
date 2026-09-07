@@ -48,6 +48,7 @@ const isOriginAllowed = (origin) => {
   if (!origin) return true; // Allow non-browser requests (like Postman)
   if (ALLOWED_ORIGINS.includes(origin)) return true;
   if (origin.endsWith(".vercel.app")) return true; // Support dynamic Vercel previews
+  if (origin.endsWith(".netlify.app")) return true; // Support Netlify deploys / previews
   if (origin.includes("localhost:")) return true; // Support any local port
   return false;
 };
